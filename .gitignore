@@ -1,0 +1,6 @@
+$ git status
+
+**.csv
+__pycache__/
+config__/
+data__/
