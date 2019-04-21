@@ -4,3 +4,4 @@ $ git status
 __pycache__/
 config__/
 data__/
+private/
