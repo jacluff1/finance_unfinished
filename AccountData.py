@@ -20,7 +20,7 @@ def clean_raw():
     # get data
     #===========================================================================
 
-    data = pd.read_csv("ExportedTransactions.csv")
+    data = pd.read_csv("private/ExportedTransactions.csv")
 
     # select useful columns
     data = data[['Posting Date', 'Amount', 'Description', 'Transaction Category']]
@@ -218,10 +218,10 @@ def clean_raw():
     # save
     #===========================================================================
 
-    data.to_csv("clean.csv", index=False)
+    data.to_csv("private/clean.csv", index=False)
 
 def load_data():
-    return pd.read_csv("clean.csv")
+    return pd.read_csv("private/clean.csv")
 
 #===============================================================================
 # select portions of the data
@@ -321,7 +321,7 @@ def plot_expense_categories(data):
     plt.subplots_adjust(wspace=.15, bottom=.15, top=.9)
 
     # save and close
-    fig.savefig("expense_categories.pdf")
+    fig.savefig("private/expense_categories.pdf")
     plt.close(fig)
 
 def plot_profits(data):
@@ -341,5 +341,5 @@ def plot_profits(data):
     plt.tight_layout()
     plt.subplots_adjust(bottom=.2, top=.9)
 
-    fig.savefig("monthly_profits.pdf")
+    fig.savefig("private/monthly_profits.pdf")
     plt.close(fig)
