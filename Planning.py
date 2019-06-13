@@ -58,24 +58,42 @@ def annual_net_jacob(hourly,**kwargs):
 def monthly_expenses_jacob(hourly,**kwargs):
     show = kwargs['show'] if 'show' in kwargs else True
     visit_freq = kwargs['visit_freq'] if 'visit_freq' in kwargs else 1e10
+    nearby = kwargs['nearby'] if 'nearby' in kwargs else False
 
     ex = {
+        'saving'            : annual_net_jacob(hourly,**kwargs)*.05/12,
+        'student_loans'     : annual_gross_jacob(hourly,show=False) * .1/12,
+    }
+
+    live_away = {
         'rent'              : 1000,
         'wifi'              : 50,
         'utilities'         : 120,
         'transportation'    : 50 * 52/12,
-        'saving'            : annual_net_jacob(hourly,**kwargs)*.05/12,
         'food'              : 300,
-        'student_loans'     : annual_gross_jacob(hourly,show=False) * .1/12,
         'family_vist'       : 350 * 52/(12*visit_freq)
         }
+
+    live_nearby = {
+        'motels'            : 46 * 3 * (52/12),
+        'car'               : 350,
+        # 'gas'               : 450 * (52/12) / 50 * 3.00,
+        'maintenance'       : 450 * (52/12) / 5000 * 80,
+        'food'              : 200,
+        'insurance'         : 30
+    }
+
+    if nearby:
+        ex.update(live_nearby)
+    else:
+        ex.update(live_away)
 
     if show: print("monthly:")
     total = 0
     for key,expense in ex.items():
         total += expense
-        if show: print(f"{key}: {round(expense,2)}")
-    print(f"\ntotal monthly expenses: {round(total,2)}")
+        if show: print(f"{key}: {expense:0.2f}")
+    print(f"\ntotal monthly expenses: {total:0.2f}")
 
     return round(total,2)
 
