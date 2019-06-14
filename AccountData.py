@@ -1,14 +1,94 @@
+# import external dependencies
 import numpy as np
 import pandas as pd
 import pdb
-import matplotlib
-matplotlib.use('agg')
+import os
 import matplotlib.pyplot as plt
+import seaborn as sn
 
-from matplotlib.ticker import FuncFormatter
-def hundreds(x, pos):
-    return '%2.0f' % (x * 1e-2)
-formatter = FuncFormatter(hundreds)
+# import external dependencies
+from Base import Base
+
+# from matplotlib.ticker import FuncFormatter
+# def hundreds(x, pos):
+#     return '%2.0f' % (x * 1e-2)
+# formatter = FuncFormatter(hundreds)
+
+#===============================================================================
+# kwargs
+#===============================================================================
+
+kwargs = {
+    'csv_'      : {
+        'map_rows_'     : 'AccountDataMapRows.csv',
+        'raw_data_'     : 'ExportedTransactions.csv',
+        'clean_data_'   : 'clean.csv',
+    },
+    'map_cols_' : {
+        'ID'            : 'Reference Number',
+        'amount'        : 'Amount',
+        'description'   : 'Description',
+        'category'      : 'Transactional Category'
+    }
+}
+
+#===============================================================================
+# class definition
+#===============================================================================
+
+class AccountData(Base):
+
+    def __init__(self, **kwargs):
+        super().__init__(kwargs)
+
+        # load csv files
+        for attr,file in self.csv_.items():
+            setattr(self, attr, pd.read_csv(file))
+
+        update_cleaned_data()
+
+    def update_cleaned_data(self):
+
+        # check if files are present
+        raw_present = hasattr(self, 'raw_data_')
+        clean_present = hasattr(self, 'clean_data')
+        if not any([raw_present, clean_present]):
+            print("There doesn't appear to be any raw or cleaned data present")
+            return
+
+        # alias column map
+        colMap = self.map_cols_
+
+        if clean_present:
+            # alias clean data
+            clean = self.clean_data_
+            if raw_present:
+                # alias raw data
+                raw = self.raw_data_
+                # rename columns in raw data
+                
+                # only select raw data that isn't in clean data
+                raw = raw[ ~raw[colMap['ID']].isin(clean[self.meta_['ID']) ]
+                # clean raw data and merge it with the already clean data
+                clean = clean.append( self.__clean_raw_data(raw), ignore_index=True )
+        elif raw_data:
+            # clean raw data
+            clean = self.__clean_raw_data( pd.read_csv(self.files_['raw_data']) )
+
+        # save cleaned data
+        self.clean_data_ = clean
+
+    #===========================================================================
+    # helper methods
+    #===========================================================================
+
+    def __clean_raw_data(self, raw):
+
+        # only select useful columns
+        raw = raw[self.meta['raw_columns']]
+
+        # convert long data descriptions to shorter descriptions
+        def apply_me
 
 #===============================================================================
 # load and clean data
@@ -20,163 +100,10 @@ def clean_raw():
     # get data
     #===========================================================================
 
-    data = pd.read_csv("private/ExportedTransactions.csv")
+    data = pd.read_csv("data/ExportedTransactions.csv")
 
     # select useful columns
     data = data[['Posting Date', 'Amount', 'Description', 'Transaction Category']]
-
-    #===========================================================================
-    # categories
-    #===========================================================================
-
-    bills = {
-        'AHCCCSPREMBILL'        : 'AHCCCS - Kids Care',
-        'BANK OF AMERICA ONLINE PMT': 'BoA - card',
-        'BK OF AMER VISA'       : 'BoA - card',
-        'CARDMEMBER'            : 'DF-card',
-        'CARRINGTON'            : 'Carrington',
-        'CENTURYLINK'           : 'CenturyLink',
-        'CITY OF MESA CHECKPYMT': 'Mesa Utilities',
-        'NAVI ED SERV PP STUDNTLOAN ACH TRANSACTION JAC'    : 'student loans - Jacob',
-        'NAVI ED SERV PP STUDNTLOAN ACH TRANSACTION CLUFF'  : 'student loans - Amber',
-        'NAVI ED SERV WEB STUDNTLOAN ACH TRANSACTION AM'    : 'student loans - Amber',
-        'PLANET FIT'            : 'Planet Fitness',
-        'SOLARCITY'             : 'Solar City',
-        'SOLAR CITY'            : 'Solar City',
-        'SRP SUREPAY'           : 'SRP',
-        'T-MOBILE'              : 'Tmobile',
-        'TRANSFER TO 2102'      : 'Prius V',
-        }
-
-    entertainment = {
-        'AMC ONLINE'            : 'AMC',
-        'ATOM TICKETS'          : 'Atom Tickets',
-        'BLACKROCKCO'           : 'Blackrock Coffee',
-        'DAIRY QUEEN'           : 'Dairy Queen',
-        'EDIBLE ARRANGEMENTS'   : 'Edible Arrangements',
-        'JAMBA JUICE'           : 'Jamba Juice',
-        'JARRODS COFFEE TEA'    : 'Jarrods Coffee & Tea',
-        'SPOTIFY'               : 'Spotify',
-        'NETFLIX.COM'           : 'Netflix',
-        'REDBOX'                : 'Redbox',
-        'PLAYSTATION NETWORK'   : 'Playstation',
-        'TOTAL WINE'            : 'Total Wine',
-        'TICKETMASTER'          : 'Ticketmaster',
-        'WORLD MARK THE CLUB'   : 'World Mark'
-        }
-
-    fees = {
-        'AZ MOTOR VEHICLE'      : 'MVD',
-        'AZ VEHICLE EMISSION'   : 'emissions',
-        'PAID NSF FEE'          : 'Overdraft'
-        }
-
-    foodAndGrocery = {
-        'ARBYS'                 : 'Arbys',
-        'BACKYARD TACO'         : 'Backyard Taco',
-        'BANNER DESERT BISTR'   : 'Banner Desert Bistro',
-        'CHICK-FIL-A'           : 'Chick-Fil-A',
-        'CHIPOTLE'              : 'Chipotle',
-        'COSTCO'                : 'Costco',
-        'CULINARY DROPOUT'      : 'Culinary Dropout',
-        "DENNY'S"               : 'Dennys',
-        'EL POLLO LOCO'         : 'El Pollo Loco',
-        'FOOD CITY'             : 'Food City',
-        'FRYS-MKTPLACE'         : 'Frys',
-        'GENOS GIANT SLICE'     : 'Genos Pizza',
-        'GO PUFF'               : 'Go Puff',
-        'IN N OUT BURGER'       : 'In-N-Out',
-        'LITTLE CAESARS'        : 'Little Caesars',
-        'JIMMY JOHNS'           : 'Jimmy Johns',
-        'MSB MESA UNIFIED'      : 'school lunches',
-        'PANDA EXPRESS'         : 'Panda Express',
-        'PRIME NOW'             : 'Prime Now',
-        'PUBLIX'                : 'Publix',
-        'RAISING CANES'         : 'Raising Canes',
-        'SCHLOTZSKY'            : "Schlotzsky's",
-        'SMART AND FINAL'       : 'Smart & Final',
-        'SQ *'                  : 'SQ',
-        'SUBWAY'                : 'Subway',
-        'TACO BELL'             : 'Taco Bell',
-        'TACO NAZO'             : 'Taco Nazo',
-        'TACO PRADO'            : 'Taco Prado',
-        'TARGET'                : 'Target',
-        'WINCO FOODS'           : 'Winco',
-        'WAL-MART'              : 'Wal-Mart',
-        'WM SUPERCENTER'        : 'Wal-Mart'
-        }
-
-    health = {
-        'WALGREENS'             : 'Walgreens',
-        'AZ DEPT HLTH SVCS'     : 'Arizona Dept Health Services'
-    }
-
-    income = {
-        'ARIZONA STATE'         : 'ASU',
-        'CASH DEPOSIT'          : 'Private Clients',
-        'CASH WITHDRAWAL'       : 'Cash Withdrawal',
-        'CASH AND CHECK DEPOSIT': 'Envy',
-        'DEPOSIT'               : 'Private Clients',
-        'DEPOSIT CHECK'         : 'Envy',
-        'FCNH'                  : 'Cortiva',
-        'STRIPE TRANSFER X'     : 'Lyft',
-        'TECHFIELD'             : 'Techfield'
-        }
-
-    insurance = {
-        'PRIMERICA'             : 'Primerica',
-        'SAFECO INSURANCE'      : 'Safeco'
-        }
-
-    investments = {
-        'VANGUARD EDI PYMNTS'   : 'Vanguard Investments',
-        'VGI-TGTRET2045 INVESTMENT' : 'Vanguard Investments'
-        }
-
-    shopping = {
-        'AMAZON.COM'            : 'Amazon',
-        'AMZN'                  : 'Amazon',
-        'BLACK MARKET MINERA'   : 'Black Market Minera',
-        'COSMOPROF'             : 'Cosmoprof',
-        'CARTERS'               : 'Carters',
-        'THE HOME DEPOT'        : 'Home Depot',
-        'JOANN'                 : 'Joanns',
-        'JOURNEYS KIDZ'         : 'Journeys Kidz',
-        'KOHLS'                 : 'Kohls',
-        'OFFICE MAX'            : 'Office Max',
-        'PARTY CITY'            : 'Party City',
-        'VISTAPRINT'            : 'Vistaprint'
-        }
-
-    transportation = {
-        'ARCO'                  : 'Arco',
-        'AUTO AIR & VACUUM'     : 'carwash',
-        'CIRCLE K'              : 'Circle K',
-        'EARNHARDT TOYOTA'      : 'Earnhardt',
-        'LYFT'                  : 'Lyft',
-        'RACEWAY CARWASH'       : 'carwash',
-        'QT'                    : 'Quicktrip',
-        'QUIKTRIP'              : 'Quicktrip',
-        'SKYHARBORPARKINGTER'   : 'airport',
-        'SHELL OIL'             : 'Shell Oil',
-        'UBER'                  : 'Uber',
-        }
-
-    #===========================================================================
-    # rename and categorize
-    #===========================================================================
-
-    categories = {
-        'bills'             : bills,
-        'fun'               : entertainment,
-        'food & grocery'    : foodAndGrocery,
-        'health'            : health,
-        'income'            : income,
-        'insurance'         : insurance,
-        'investments'       : investments,
-        'shopping'          : shopping,
-        'transportation'    : transportation
-        }
 
     for category,dictionary in categories.items():
         for description,new_description in dictionary.items():
@@ -268,7 +195,6 @@ def find_monthly_expenses(data):
     return expenses.groupby('period_yr_m').amount.sum().abs()
 
 def find_monthly_profits(data):
-    # df = select_whole_periods(data)
     income = find_monthly_income(data)
     expenses = find_monthly_expenses(data)
     return income - expenses
@@ -283,8 +209,7 @@ def find_average_expenses(data):
 
 def find_average_profits(data):
     result = find_monthly_profits(data).sum() / N_per(data)
-    return round(result,2
-    )
+    return round(result,2)
 
 def find_ambers_average_income(data):
 
