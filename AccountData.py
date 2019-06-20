@@ -1,157 +1,19 @@
 # import external dependencies
 import numpy as np
 import pandas as pd
-import pdb
 import os
-import matplotlib.pyplot as plt
-import seaborn as sn
+# import matplotlib.pyplot as plt
+# import seaborn as sn
+# from matplotlib.ticker import FuncFormatter
+# def hundreds(x, pos):
+#     return '%2.0f' % (x * 1e-2)
+#     formatter = FuncFormatter(hundreds)
 
 # import external dependencies
 from Base import Base
 
-# from matplotlib.ticker import FuncFormatter
-# def hundreds(x, pos):
-#     return '%2.0f' % (x * 1e-2)
-# formatter = FuncFormatter(hundreds)
-
 #===============================================================================
-# kwargs
-#===============================================================================
-
-kwargs = {
-    'csv_'      : {
-        'map_rows_'     : 'AccountDataMapRows.csv',
-        'raw_data_'     : 'ExportedTransactions.csv',
-        'clean_data_'   : 'clean.csv',
-    },
-    'map_cols_' : {
-        'ID'            : 'Reference Number',
-        'amount'        : 'Amount',
-        'description'   : 'Description',
-        'category'      : 'Transactional Category'
-    }
-}
-
-#===============================================================================
-# class definition
-#===============================================================================
-
-class AccountData(Base):
-
-    def __init__(self, **kwargs):
-        super().__init__(kwargs)
-
-        # load csv files
-        for attr,file in self.csv_.items():
-            setattr(self, attr, pd.read_csv(file))
-
-        update_cleaned_data()
-
-    def update_cleaned_data(self):
-
-        # check if files are present
-        raw_present = hasattr(self, 'raw_data_')
-        clean_present = hasattr(self, 'clean_data')
-        if not any([raw_present, clean_present]):
-            print("There doesn't appear to be any raw or cleaned data present")
-            return
-
-        # alias column map
-        colMap = self.map_cols_
-
-        if clean_present:
-            # alias clean data
-            clean = self.clean_data_
-            if raw_present:
-                # alias raw data
-                raw = self.raw_data_
-                # rename columns in raw data
-                
-                # only select raw data that isn't in clean data
-                raw = raw[ ~raw[colMap['ID']].isin(clean[self.meta_['ID']) ]
-                # clean raw data and merge it with the already clean data
-                clean = clean.append( self.__clean_raw_data(raw), ignore_index=True )
-        elif raw_data:
-            # clean raw data
-            clean = self.__clean_raw_data( pd.read_csv(self.files_['raw_data']) )
-
-        # save cleaned data
-        self.clean_data_ = clean
-
-    #===========================================================================
-    # helper methods
-    #===========================================================================
-
-    def __clean_raw_data(self, raw):
-
-        # only select useful columns
-        raw = raw[self.meta['raw_columns']]
-
-        # convert long data descriptions to shorter descriptions
-        def apply_me
-
-#===============================================================================
-# load and clean data
-#===============================================================================
-
-def clean_raw():
-
-    #===========================================================================
-    # get data
-    #===========================================================================
-
-    data = pd.read_csv("data/ExportedTransactions.csv")
-
-    # select useful columns
-    data = data[['Posting Date', 'Amount', 'Description', 'Transaction Category']]
-
-    for category,dictionary in categories.items():
-        for description,new_description in dictionary.items():
-            data.loc[data.Description.str.contains(description),"Transaction Category"] = category
-            data.loc[data.Description.str.contains(description),"Description"] = new_description
-
-    #===========================================================================
-    # dates
-    #===========================================================================
-
-    dates = pd.DatetimeIndex(data['Posting Date'])
-    data['year'] = dates.year
-    data['month'] = dates.month
-    data['day'] = dates.day
-
-    periods = dates.to_period(freq='M')
-    periods1 = np.empty(periods.shape[0], dtype=np.int32)
-    for i,period in enumerate(periods.unique()):
-        periods1[ periods == period ] = i
-    data['period'] = periods1
-    data['period_yr_m'] = periods
-
-    data.drop('Posting Date', axis=1, inplace=True)
-
-    #===========================================================================
-    # rename columns
-    #===========================================================================
-
-    data.rename(str.lower, axis=1, inplace=True)
-    data.rename(index=str, columns={'transaction category':'category'}, inplace=True)
-
-    #===========================================================================
-    # fill nans
-    #===========================================================================
-
-    data.category.fillna(value='misc', inplace=True)
-
-    #===========================================================================
-    # save
-    #===========================================================================
-
-    data.to_csv("private/clean.csv", index=False)
-
-def load_data():
-    return pd.read_csv("private/clean.csv")
-
-#===============================================================================
-# select portions of the data
+# selection functions
 #===============================================================================
 
 def select_expenses(data):
@@ -160,16 +22,16 @@ def select_expenses(data):
 def select_income(data):
     return data[data.amount > 0]
 
-def select_year(data,year):
+def select_year(data, year):
     return data[data.year == year]
 
-def select_month(data,month):
+def select_month(data, month):
     return data[data.month == month]
 
-def select_day(data,day):
+def select_day(data, day):
     return data[data.day == day]
 
-def select_period(data,period):
+def select_period(data, period):
     return data[data.period == period]
 
 def select_whole_periods(data):
@@ -178,7 +40,7 @@ def select_whole_periods(data):
     return data[(data.period > pmin) & (data.period < pmax)]
 
 #===============================================================================
-# find useful information from the data
+# find useful information from data
 #===============================================================================
 
 def N_per(data):
@@ -268,3 +130,105 @@ def plot_profits(data):
 
     fig.savefig("private/monthly_profits.pdf")
     plt.close(fig)
+
+#===============================================================================
+# class definition
+#===============================================================================
+
+class AccountData(Base):
+
+    def __init__(self, **kwargs):
+        print("\nconstructing AccountData instance...")
+        self.name_ = "AccountData"
+        super().__init__(**kwargs)
+
+        self.update_cleaned_data()
+        self.save_csv('clean_data_')
+        # self.print_self()
+
+    def update_cleaned_data(self):
+
+        print("\nupdating cleaned data")
+
+        # check if files are present
+        raw_present = hasattr(self, 'raw_data_')
+        clean_present = hasattr(self, 'clean_data_')
+        if not any([raw_present, clean_present]):
+            print("There doesn't appear to be any raw or cleaned data present")
+            return
+
+        if clean_present:
+            # alias clean data
+            clean = self.clean_data_
+            if raw_present:
+                # alias raw data
+                raw = self.raw_data_
+                # only select raw data that isn't in clean data
+                raw = raw[ ~raw[self.map_cols_['ID']].isin(clean['ID']) ]
+                # clean raw data and merge it with the already clean data
+                clean = clean.append( self.__clean_raw_data(raw), ignore_index=True )
+                # delete raw data file
+                os.remove( self.csv_['raw_data_'] )
+        elif raw_present:
+            # clean raw data
+            clean = self.__clean_raw_data( self.raw_data_ )
+
+        # save cleaned data
+        self.clean_data_ = clean
+
+    #===========================================================================
+    # helper methods
+    #===========================================================================
+
+    def __clean_raw_data(self, raw):
+
+        print("\ncleaning raw data...")
+
+        # rename columns in raw data
+        raw = raw.rename(columns={val:key for key,val in self.map_cols_.items()})
+
+        # only select useful columns
+        raw = raw[ [*self.map_cols_] ]
+
+        #=======================================================================
+        # relabel data
+        #=======================================================================
+
+        # convert long data descriptions to shorter descriptions
+        for i in range(self.map_rows_.shape[0]):
+            # select row from map_rows_ DF
+            row = self.map_rows_.iloc[i]
+            # filter to select rows from raw data
+            mask = raw.description.str.contains( row.search_key )
+            # rename description and category
+            raw.loc[mask,'description'] = row.new_description
+            raw.loc[mask,'category'] = row.category
+
+        #===========================================================================
+        # dates
+        #===========================================================================
+
+        dates = pd.DatetimeIndex(raw.date)
+        raw['year'] = dates.year.values.astype(np.int32)
+        raw['month'] = dates.month.values.astype(np.int32)
+        raw['day'] = dates.day.values.astype(np.int32)
+
+        raw['period_yr_m'] = dates.to_period(freq='M')
+        periods = np.empty(raw.shape[0], dtype=np.int32)
+        for i,period in enumerate(raw.period_yr_m.unique()):
+            periods[ raw.period_yr_m == period ] = i
+        raw['period'] = periods
+
+        raw.drop('date', axis=1, inplace=True)
+
+        #=======================================================================
+        # fill nans
+        #=======================================================================
+
+        raw.category.fillna(value='misc', inplace=True)
+
+        #=======================================================================
+        # output
+        #=======================================================================
+
+        return raw
